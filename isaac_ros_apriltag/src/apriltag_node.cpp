@@ -146,7 +146,8 @@ void AprilTagNode::AprilTagDetectionsCallback(
   for (size_t i = 0; i < tags_count; i++) {
     // struct is defined in fiducial_message.hpp
     auto info = apriltags_detections_array.info.at(i).value();
-    auto pose = apriltags_detections_array.pose.at(i).value();
+    auto points = apriltags_detections_array.keypoints.at(i).value();
+    //auto pose = apriltags_detections_array.pose.at(i).value();
 
     // For AprilTag, the id is of the format <TagFamily_ID>
     // Ex. If the decoded tag ID is 14 and belongs to TagFamily tag36h11, the id is tag36h11_14
@@ -157,15 +158,14 @@ void AprilTagNode::AprilTagDetectionsCallback(
 
     transform_stamped.header.frame_id = msg.frame_id;
     transform_stamped.child_frame_id = tag_family_id;
-    transform_stamped.transform.translation.x = pose->translation.x();
-    transform_stamped.transform.translation.y = pose->translation.y();
-    transform_stamped.transform.translation.z = pose->translation.z();
-    transform_stamped.transform.rotation.x = pose->rotation.quaternion().x();
-    transform_stamped.transform.rotation.y = pose->rotation.quaternion().y();
-    transform_stamped.transform.rotation.z = pose->rotation.quaternion().z();
-    transform_stamped.transform.rotation.w = pose->rotation.quaternion().w();
 
-    tf_broadcaster_->sendTransform(transform_stamped);
+    nvidia::gxf::Handle<nvidia::gxf::Tensor> corners_tensor_handle = points;
+    auto corners_tensor_data = corners_tensor_handle->data<double>().value();
+    const int stride = corners_tensor_handle->shape().dimension(0);
+
+    for (int j = 0; j < stride; j++) {
+      std::cout << j << ". Punkt:" << " y:" << corners_tensor_data[j] << " x:" << corners_tensor_data[j + stride] << std::endl;
+    }
   }
 }
 
